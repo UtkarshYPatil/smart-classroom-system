@@ -1,9 +1,33 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../utils/api';
 
 const AdminPanel = () => {
   const { user } = useAuth();
+  const [stats, setStats] = useState({
+    total_students: 0,
+    active_classes: 0,
+    available_rooms: 0,
+    todays_attendance: { count: 0, percentage: 0 }
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      const response = await api.get('/stats/dashboard');
+      setStats(response.data);
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const quickActions = [
     {
@@ -58,11 +82,31 @@ const AdminPanel = () => {
     },
   ];
 
-  const stats = [
-    { label: 'Total Students', value: '0', icon: '👨‍🎓', color: 'text-blue-600' },
-    { label: 'Active Classes', value: '0', icon: '📚', color: 'text-green-600' },
-    { label: 'Available Rooms', value: '0', icon: '🚪', color: 'text-purple-600' },
-    { label: 'Today\'s Attendance', value: '0%', icon: '✅', color: 'text-orange-600' },
+  const statsDisplay = [
+    { 
+      label: 'Total Students', 
+      value: loading ? '...' : stats.total_students.toString(), 
+      icon: '👨‍🎓', 
+      color: 'text-blue-600' 
+    },
+    { 
+      label: 'Active Classes', 
+      value: loading ? '...' : stats.active_classes.toString(), 
+      icon: '📚', 
+      color: 'text-green-600' 
+    },
+    { 
+      label: 'Available Rooms', 
+      value: loading ? '...' : stats.available_rooms.toString(), 
+      icon: '🚪', 
+      color: 'text-purple-600' 
+    },
+    { 
+      label: 'Today\'s Attendance', 
+      value: loading ? '...' : `${stats.todays_attendance.percentage}%`, 
+      icon: '✅', 
+      color: 'text-orange-600' 
+    },
   ];
 
   return (
@@ -114,7 +158,7 @@ const AdminPanel = () => {
 
         {/* Stats Grid with Animations */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
+          {statsDisplay.map((stat, index) => (
             <div
               key={index}
               className="group relative bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 border border-gray-200 hover:border-transparent hover:-translate-y-2 overflow-hidden"

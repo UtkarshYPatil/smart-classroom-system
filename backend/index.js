@@ -14,7 +14,10 @@ const supabase = createClient(
 
 // Middleware
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*'
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
@@ -23,6 +26,7 @@ const attendanceRoutes = require('./routes/attendance');
 const studentRoutes = require('./routes/students');
 const roomRoutes = require('./routes/rooms');
 const timetableRoutes = require('./routes/timetable');
+const statsRoutes = require('./routes/stats');
 const authMiddleware = require('./middleware/auth');
 
 // Make supabase client available to routes
@@ -36,6 +40,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/timetable', timetableRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Health check endpoint (for monitoring and keeping Render awake)
 app.get('/health', (req, res) => {

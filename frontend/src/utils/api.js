@@ -176,3 +176,43 @@ export const timetableAPI = {
     return handleResponse(response);
   },
 };
+
+// Generic API client for custom requests
+const api = {
+  get: async (endpoint) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, { headers });
+    return handleResponse(response);
+  },
+
+  post: async (endpoint, data) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  put: async (endpoint, data) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  delete: async (endpoint) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'DELETE',
+      headers,
+    });
+    return handleResponse(response);
+  },
+};
+
+export default api;
