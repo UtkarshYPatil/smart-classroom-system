@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Supabase Connection</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .result {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { border-left: 4px solid #10b981; }
+        .error { border-left: 4px solid #ef4444; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #2563eb; }
+        pre {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Supabase Connection Test</h1>
+    
+    <div class="result">
+        <h3>Test Login</h3>
+        <input type="email" id="email" placeholder="Email" style="width: 100%; padding: 8px; margin: 5px 0;">
+        <input type="password" id="password" placeholder="Password" style="width: 100%; padding: 8px; margin: 5px 0;">
+        <button onclick="testLogin()">Test Login</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://nkarkqkfrvkgaoxqewit.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rYXJrcWtmcnZrZ2FveHFld2l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNjY0NzIsImV4cCI6MjA3OTg0MjQ3Mn0.XkvWrnM6KpHaabc2ch8e-6yG7H4oLtMM-o-GXU7DDbg';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function addResult(title, data, isError = false) {
+            const div = document.createElement('div');
+            div.className = `result ${isError ? 'error' : 'success'}`;
+            div.innerHTML = `
+                <h3>${isError ? '❌' : '✅'} ${title}</h3>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+            document.getElementById('results').appendChild(div);
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            document.getElementById('results').innerHTML = '';
+
+            try {
+                // Step 1: Test auth login
+                addResult('Step 1: Testing authentication...', { email });
+
+                const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+
+                if (authError) {
+                    addResult('Auth Error', authError, true);
+                    return;
+                }
+
+                addResult('Auth Success', {
+                    user_id: authData.user.id,
+                    email: authData.user.email,
+                    confirmed: authData.user.email_confirmed_at ? 'Yes' : 'No'
+                });
+
+                // Step 2: Test fetching user role
+                addResult('Step 2: Fetching user role...', { user_id: authData.user.id });
+
+                const { data: userData, error: userError } = await supabase
+                    .from('users')
+                    .select('role, student_uid')
+                    .eq('id', authData.user.id)
+                    .maybeSingle();
+
+                if (userError) {
+                    addResult('User Fetch Error', userError, true);
+                    return;
+                }
+
+                if (!userData) {
+                    addResult('User Record Missing', {
+                        message: 'User authenticated but no record in users table',
+                        user_id: authData.user.id
+                    }, true);
+                    return;
+                }
+
+                addResult('User Role Found', userData);
+
+                // Step 3: Test RLS
+                addResult('Step 3: Testing RLS...', {});
+
+                const { data: allUsers, error: rlsError } = await supabase
+                    .from('users')
+                    .select('*');
+
+                if (rlsError) {
+                    addResult('RLS Error', rlsError, true);
+                } else {
+                    addResult('RLS Test Success', {
+                        message: 'Can read users table',
+                        count: allUsers.length
+                    });
+                }
+
+                addResult('✅ ALL TESTS PASSED!', {
+                    message: 'Login should work in your app now',
+                    next_step: 'Clear browser cache and try logging in'
+                });
+
+            } catch (error) {
+                addResult('Unexpected Error', error, true);
+            }
+        }
+
+        // Auto-test on load if credentials are in URL
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('email')) {
+                document.getElementById('email').value = params.get('email');
+                document.getElementById('password').value = params.get('password') || '';
+            }
+        };
+    </script>
+</body>
+</html>
