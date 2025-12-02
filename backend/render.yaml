@@ -16,3 +16,7 @@ services:
         sync: false
       - key: SUPABASE_ANON_KEY
         sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://smart-classroom-sys-git-c36c3-utkarsh-patils-projects-8fb5681c.vercel.app
