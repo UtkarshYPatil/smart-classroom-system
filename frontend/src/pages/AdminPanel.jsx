@@ -21,9 +21,18 @@ const AdminPanel = () => {
   const fetchDashboardStats = async () => {
     try {
       const response = await api.get('/stats/dashboard');
-      setStats(response.data);
+      // Ensure the response has the expected structure
+      if (response.data && !response.data.error) {
+        setStats({
+          total_students: response.data.total_students || 0,
+          active_classes: response.data.active_classes || 0,
+          available_rooms: response.data.available_rooms || 0,
+          todays_attendance: response.data.todays_attendance || { count: 0, percentage: 0 }
+        });
+      }
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
+      // Keep default values on error
     } finally {
       setLoading(false);
     }
